@@ -22,13 +22,14 @@ import (
 	"github.com/emicklei/go-restful"
 	"github.com/emicklei/go-restful-openapi"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"kubesphere.io/kubesphere/pkg/api/devops/v1alpha2"
 	devopsv1alpha1 "kubesphere.io/kubesphere/pkg/apis/devops/v1alpha1"
 	devopsapi "kubesphere.io/kubesphere/pkg/apiserver/devops"
 	"kubesphere.io/kubesphere/pkg/apiserver/runtime"
 	"kubesphere.io/kubesphere/pkg/constants"
 	"kubesphere.io/kubesphere/pkg/models/devops"
 
-	"kubesphere.io/kubesphere/pkg/params"
+	"kubesphere.io/kubesphere/pkg/server/params"
 	"net/http"
 )
 
@@ -53,17 +54,17 @@ func addWebService(c *restful.Container) error {
 		Doc("Get the specified DevOps Project").
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DevOpsProjectTag}).
 		Param(webservice.PathParameter("devops", "DevOps project's ID, e.g. project-RRRRAzLBlLEm")).
-		Returns(http.StatusOK, RespOK, devops.DevOpsProject{}).
-		Writes(devops.DevOpsProject{}))
+		Returns(http.StatusOK, RespOK, v1alpha2.DevOpsProject{}).
+		Writes(v1alpha2.DevOpsProject{}))
 
 	webservice.Route(webservice.PATCH("/devops/{devops}").
 		To(devopsapi.UpdateProjectHandler).
 		Doc("Update the specified DevOps Project").
 		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DevOpsProjectTag}).
 		Param(webservice.PathParameter("devops", "DevOps project's ID, e.g. project-RRRRAzLBlLEm")).
-		Reads(devops.DevOpsProject{}).
-		Returns(http.StatusOK, RespOK, devops.DevOpsProject{}).
-		Writes(devops.DevOpsProject{}))
+		Reads(v1alpha2.DevOpsProject{}).
+		Returns(http.StatusOK, RespOK, v1alpha2.DevOpsProject{}).
+		Writes(v1alpha2.DevOpsProject{}))
 
 	webservice.Route(webservice.GET("/devops/{devops}/defaultroles").
 		To(devopsapi.GetDevOpsProjectDefaultRoles).
@@ -247,8 +248,14 @@ The last one is encrypted info, such as the password of the username-password ty
 		Param(webservice.QueryParameter("limit", "the limit item count of the search.").
 			Required(false).
 			DataFormat("limit=%d")).
-		Returns(http.StatusOK, RespOK, []devops.Pipeline{}).
-		Writes([]devops.Pipeline{}))
+		Returns(http.StatusOK, RespOK, struct {
+			Items []devops.Pipeline `json:"items"`
+			Total int               `json:"total_count"`
+		}{}).
+		Writes(struct {
+			Items []devops.Pipeline `json:"items"`
+			Total int               `json:"total_count"`
+		}{}))
 
 	// match Jenkisn api "/blue/rest/organizations/jenkins/pipelines/{devops}/{pipeline}/runs/"
 	webservice.Route(webservice.GET("/devops/{devops}/pipelines/{pipeline}/runs").
@@ -266,8 +273,22 @@ The last one is encrypted info, such as the password of the username-password ty
 		Param(webservice.QueryParameter("branch", "the name of branch, same as repository branch, will be filtered by branch.").
 			Required(false).
 			DataFormat("branch=%s")).
-		Returns(http.StatusOK, RespOK, []devops.BranchPipelineRun{}).
-		Writes([]devops.BranchPipelineRun{}))
+		Returns(http.StatusOK, RespOK, struct {
+			Items []devops.BranchPipelineRun `json:"items"`
+			Total int                        `json:"total_count"`
+		}{}).
+		Writes(struct {
+			Items []devops.BranchPipelineRun `json:"items"`
+			Total int                        `json:"total_count"`
+		}{}).
+		Writes(struct {
+			Items []devops.BranchPipelineRun `json:"items"`
+			Total int                        `json:"total_count"`
+		}{}).
+		Writes(struct {
+			Items []devops.BranchPipelineRun `json:"items"`
+			Total int                        `json:"total_count"`
+		}{}))
 
 	// match Jenkins api "/blue/rest/organizations/jenkins/pipelines/{devops}/{pipeline}/branches/{branch}/runs/{run}/"
 	webservice.Route(webservice.GET("/devops/{devops}/pipelines/{pipeline}/branches/{branch}/runs/{run}").
@@ -633,30 +654,30 @@ The last one is encrypted info, such as the password of the username-password ty
 		Param(webservice.PathParameter("file", "the name of binary file")).
 		Returns(http.StatusOK, RespOK, nil))
 
-	// TODO are not used in this version. will be added in 2.1.0
-	//// match /job/init-job/descriptorByName/org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition/checkScriptCompile
-	//webservice.Route(webservice.POST("/devops/check/scriptcompile").
-	//	To(devopsapi.CheckScriptCompile).
-	//	Metadata(restfulspec.KeyOpenAPITags, tags).
-	//	Consumes("application/x-www-form-urlencoded", "charset=utf-8").
-	//	Produces("application/json", "charset=utf-8").
-	//	Doc("Check pipeline script compile.").
-	//	Reads(devops.ReqScript{}).
-	//	Returns(http.StatusOK, RespOK, devops.CheckScript{}).
-	//	Writes(devops.CheckScript{}))
+	webservice.Route(webservice.POST("/devops/{devops}/pipelines/{pipeline}/checkScriptCompile").
+		To(devopsapi.CheckScriptCompile).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DevOpsPipelineTag}).
+		Param(webservice.PathParameter("devops", "DevOps project's ID, e.g. project-RRRRAzLBlLEm")).
+		Param(webservice.QueryParameter("pipeline", "the name of the CI/CD pipeline").
+			Required(false).
+			DataFormat("pipeline=%s")).
+		Consumes("application/x-www-form-urlencoded", "charset=utf-8").
+		Produces("application/json", "charset=utf-8").
+		Doc("Check pipeline script compile.").
+		Reads(devops.ReqScript{}).
+		Returns(http.StatusOK, RespOK, devops.CheckScript{}).
+		Writes(devops.CheckScript{}))
 
-	// match /job/init-job/descriptorByName/hudson.triggers.TimerTrigger/checkSpec
-	//webservice.Route(webservice.GET("/devops/check/cron").
-	//	To(devopsapi.CheckCron).
-	//	Metadata(restfulspec.KeyOpenAPITags, tags).
-	//	Produces("application/json", "charset=utf-8").
-	//	Doc("Check cron script compile.").
-	//	Param(webservice.QueryParameter("value", "string of cron script.").
-	//		Required(true).
-	//		DataFormat("value=%s")).
-	//	Returns(http.StatusOK, RespOK, []devops.QueuedBlueRun{}).
-	//	Returns(http.StatusOK, RespOK, devops.CheckCronRes{}).
-	//	Writes(devops.CheckCronRes{}))
+	webservice.Route(webservice.POST("/devops/{devops}/checkCron").
+		To(devopsapi.CheckCron).
+		Metadata(restfulspec.KeyOpenAPITags, []string{constants.DevOpsPipelineTag}).
+		Param(webservice.PathParameter("devops", "DevOps project's ID, e.g. project-RRRRAzLBlLEm")).
+		Param(webservice.PathParameter("pipeline", "the name of the CI/CD pipeline")).
+		Produces("application/json", "charset=utf-8").
+		Doc("Check cron script compile.").
+		Reads(devops.CronData{}).
+		Returns(http.StatusOK, RespOK, devops.CheckCronRes{}).
+		Writes(devops.CheckCronRes{}))
 
 	// match /blue/rest/organizations/jenkins/pipelines/{devops}/{pipeline}/runs/{run}/
 	webservice.Route(webservice.GET("/devops/{devops}/pipelines/{pipeline}/runs/{run}").

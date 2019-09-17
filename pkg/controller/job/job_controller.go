@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/golang/glog"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -30,8 +29,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	batchv1informers "k8s.io/client-go/informers/batch/v1"
 	batchv1listers "k8s.io/client-go/listers/batch/v1"
+	log "k8s.io/klog"
 	"k8s.io/kubernetes/pkg/util/metrics"
-	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 
 	"time"
 
@@ -50,8 +49,6 @@ const (
 	maxRetries             = 15
 	revisionsAnnotationKey = "revisions"
 )
-
-var log = logf.Log.WithName("job-controller")
 
 type JobController struct {
 	client           clientset.Interface
@@ -235,7 +232,7 @@ func (v *JobController) makeRevision(job *batchv1.Job) error {
 
 	revisionsByte, err := json.Marshal(revisions)
 	if err != nil {
-		glog.Error("generate reversion string failed", err)
+		log.Error("generate reversion string failed", err)
 		return nil
 	}
 

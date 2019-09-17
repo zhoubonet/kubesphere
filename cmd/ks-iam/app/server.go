@@ -20,19 +20,16 @@ package app
 import (
 	goflag "flag"
 	"fmt"
-	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"kubesphere.io/kubesphere/cmd/ks-iam/app/options"
 	"kubesphere.io/kubesphere/pkg/apiserver/runtime"
-	"kubesphere.io/kubesphere/pkg/filter"
 	"kubesphere.io/kubesphere/pkg/informers"
 	"kubesphere.io/kubesphere/pkg/models/iam"
 	"kubesphere.io/kubesphere/pkg/server"
-	"kubesphere.io/kubesphere/pkg/signals"
-	"kubesphere.io/kubesphere/pkg/simple/client/admin_jenkins"
-	"kubesphere.io/kubesphere/pkg/simple/client/devops_mysql"
+	"kubesphere.io/kubesphere/pkg/server/filter"
 	"kubesphere.io/kubesphere/pkg/utils/jwtutil"
+	"kubesphere.io/kubesphere/pkg/utils/signals"
 	"log"
 	"net/http"
 	"time"
@@ -52,7 +49,6 @@ cluster's shared state through which all other components interact.`,
 	}
 	s.AddFlags(cmd.Flags())
 	cmd.Flags().AddGoFlagSet(goflag.CommandLine)
-	glog.CopyStandardLogTo("INFO")
 
 	return cmd
 }
@@ -71,9 +67,6 @@ func Run(s *options.ServerRunOptions) error {
 	}
 
 	waitForResourceSync()
-
-	initializeAdminJenkins()
-	initializeDevOpsDatabase()
 
 	err = iam.Init(s.AdminEmail, s.AdminPassword, expireTime, s.AuthRateLimit)
 	jwtutil.Setup(s.JWTSecret)
@@ -126,12 +119,4 @@ func waitForResourceSync() {
 	ksInformerFactory.Start(stopChan)
 	ksInformerFactory.WaitForCacheSync(stopChan)
 	log.Println("resources sync success")
-}
-
-func initializeAdminJenkins() {
-	admin_jenkins.Client()
-}
-
-func initializeDevOpsDatabase() {
-	devops_mysql.OpenDatabase()
 }
